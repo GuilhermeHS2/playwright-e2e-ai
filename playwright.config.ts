@@ -8,7 +8,8 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
   reporter: process.env.CI
-    ? [['html', { open: 'never' }], ['json', { outputFile: 'results/report.json' }], ['github']]
+    ? // blob: one per CI job, merged into a single HTML report by the publish job
+      [['blob'], ['json', { outputFile: 'results/report.json' }], ['github']]
     : [['html', { open: 'never' }], ['list']],
   use: {
     trace: 'retain-on-failure',

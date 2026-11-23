@@ -16,6 +16,8 @@ jobs:
       fail-fast: false
       matrix:
         project: [api, chromium, firefox, webkit]
+    env:
+      PLAYWRIGHT_BLOB_OUTPUT_NAME: report-${{ matrix.project }}.zip
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -29,8 +31,56 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}
         with:
-          name: report-${{ matrix.project }}
+          name: blob-${{ matrix.project }}
+          path: blob-report/
+          retention-days: 14
+      # Traces and screenshots are only written for failed tests (see playwright.config.ts).
+      - uses: actions/upload-artifact@v4
+        if: ${{ failure() }}
+        with:
+          name: traces-${{ matrix.project }}
           path: |
-            playwright-report/
+            test-results/
             results/
           retention-days: 14
+
+  report:
+    needs: test
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: blob-*
+          path: all-blob-reports
+          merge-multiple: true
+      - run: npx playwright merge-reports --reporter html ./all-blob-reports
+      - uses: actions/upload-artifact@v4
+        with:
+          name: html-report
+          path: playwright-report/
+          retention-days: 14
+      - uses: actions/upload-pages-artifact@v3
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+        with:
+          path: playwright-report/
+
+  pages:
+    needs: report
+    if: ${{ !cancelled() && needs.report.result == 'success' && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - id: deploy
+        uses: actions/deploy-pages@v4
