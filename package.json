@@ -1,0 +1,25 @@
+{
+  "name": "playwright-e2e-ai",
+  "version": "1.0.0",
+  "description": "Playwright + TypeScript E2E and API suite, with a documented AI-assisted workflow (Playwright MCP + test agents)",
+  "scripts": {
+    "test": "playwright test",
+    "test:api": "playwright test --project=api",
+    "test:e2e": "playwright test --project=chromium",
+    "smoke": "playwright test --grep @smoke",
+    "typecheck": "tsc",
+    "report": "playwright show-report"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "type": "commonjs",
+  "devDependencies": {
+    "@playwright/test": "^1.65.1",
+    "@types/node": "^26.6.6",
+    "serverest": "^3.5.0",
+    "typescript": "^7.0.2",
+    "zod": "^4.6.7"
+  },
+  "private": true
+}
